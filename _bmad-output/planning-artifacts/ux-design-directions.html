@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISOW App — Design Directions</title>
+<style>
+  :root {
+    --coral: #FF5757;
+    --coral-light: #FFF0F0;
+    --coral-dark: #E04040;
+    --white: #FFFFFF;
+    --off-white: #FAFAFA;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    --black: #1A1A1A;
+    --green: #22C55E;
+    --green-light: #F0FDF4;
+    --amber: #D97706;
+    --amber-light: #FFFBEB;
+    --teal: #2B8A9E;
+    --teal-light: #F0FDFA;
+    --red: #EF4444;
+    --blue: #3B82F6;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    --radius-sm: 6px;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--gray-100);
+    color: var(--black);
+    line-height: 1.5;
+  }
+
+  /* === Navigation === */
+  .nav-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-bar h1 { font-size: 18px; font-weight: 700; color: var(--coral); }
+  .nav-tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+  .nav-tab {
+    padding: 8px 16px; border-radius: var(--radius-full);
+    border: none; cursor: pointer; font-size: 13px; font-weight: 500;
+    background: var(--gray-100); color: var(--gray-600);
+    transition: all 0.2s;
+  }
+  .nav-tab:hover { background: var(--gray-200); }
+  .nav-tab.active { background: var(--coral); color: white; }
+
+  /* === Phone Frame === */
+  .directions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 32px;
+    padding: 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  .direction-card {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .direction-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .direction-header h2 { font-size: 16px; font-weight: 600; }
+  .direction-tag {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: var(--radius-full);
+    background: var(--coral-light); color: var(--coral);
+  }
+  .phone-frame {
+    width: 375px; max-width: 100%;
+    margin: 20px auto;
+    border: 2px solid var(--gray-200);
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--white);
+    box-shadow: var(--shadow-lg);
+  }
+  .phone-status-bar {
+    height: 44px; background: var(--gray-50);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--gray-500);
+  }
+  .phone-content { min-height: 600px; position: relative; }
+  .phone-bottom-nav {
+    display: flex; justify-content: space-around; align-items: center;
+    height: 56px; border-top: 1px solid var(--gray-200);
+    background: var(--white);
+    position: sticky; bottom: 0;
+  }
+  .bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 10px; color: var(--gray-400); font-weight: 500;
+  }
+  .bottom-nav-item.active { color: var(--coral); }
+  .bottom-nav-item .nav-icon { font-size: 20px; }
+  .direction-notes {
+    padding: 16px 20px;
+    border-top: 1px solid var(--gray-200);
+    font-size: 13px; color: var(--gray-600);
+    line-height: 1.6;
+  }
+  .direction-notes strong { color: var(--gray-800); }
+
+  /* === Shared Components === */
+  .app-header {
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .app-header .logo { font-size: 20px; font-weight: 700; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 24px; border-radius: var(--radius); border: none;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-coral { background: var(--coral); color: white; }
+  .btn-coral:hover { background: var(--coral-dark); }
+  .btn-outline { background: transparent; border: 2px solid var(--gray-200); color: var(--gray-700); }
+  .btn-outline:hover { border-color: var(--gray-300); background: var(--gray-50); }
+  .btn-full { width: 100%; }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-amber { background: var(--amber); color: white; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: var(--green-light); color: #15803D; }
+  .badge-red { background: #FEF2F2; color: var(--red); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .input-field {
+    width: 100%; padding: 12px 16px;
+    border: 2px solid var(--gray-200); border-radius: var(--radius);
+    font-size: 15px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-field:focus { border-color: var(--coral); }
+  .input-label { font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 6px; display: block; }
+  .card {
+    background: var(--white); border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+  }
+  .avatar {
+    width: 48px; height: 48px; border-radius: var(--radius-full);
+    background: var(--gray-200); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: var(--gray-500);
+    overflow: hidden;
+  }
+  .avatar-lg { width: 80px; height: 80px; font-size: 28px; }
+
+  /* === Tab content === */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* === Section title === */
+  .section-intro {
+    padding: 24px 32px;
+    text-align: center;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .section-intro h2 { font-size: 22px; margin-bottom: 8px; }
+  .section-intro p { color: var(--gray-500); font-size: 14px; max-width: 600px; margin: 0 auto; }
+
+  /* === Specific mockup styles === */
+  .membership-card-display {
+    margin: 24px 20px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .membership-card-top {
+    background: var(--coral);
+    padding: 24px;
+    text-align: center;
+    color: white;
+  }
+  .membership-card-top .card-avatar {
+    width: 96px; height: 96px; border-radius: var(--radius-full);
+    background: rgba(255,255,255,0.2); margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; border: 3px solid rgba(255,255,255,0.4);
+  }
+  .membership-card-top h3 { font-size: 20px; font-weight: 700; }
+  .membership-card-top p { font-size: 13px; opacity: 0.85; }
+  .membership-card-bottom {
+    background: var(--white);
+    padding: 20px 24px;
+  }
+  .membership-detail {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+  }
+  .membership-detail:not(:last-child) { border-bottom: 1px solid var(--gray-100); }
+  .membership-detail .label { font-size: 13px; color: var(--gray-500); }
+  .membership-detail .value { font-size: 14px; font-weight: 600; }
+
+  .roster-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    padding: 16px 20px;
+  }
+  .roster-item {
+    text-align: center; padding: 12px 8px;
+    border-radius: var(--radius); background: var(--gray-50);
+  }
+  .roster-item .roster-avatar {
+    width: 56px; height: 56px; border-radius: var(--radius-full);
+    background: var(--gray-200); margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--gray-400);
+    position: relative;
+  }
+  .roster-item .roster-name { font-size: 12px; font-weight: 500; color: var(--gray-700); }
+  .roster-status-dot {
+    position: absolute; bottom: 0; right: 0;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid white;
+  }
+  .roster-status-dot.active { background: var(--green); }
+  .roster-status-dot.expired { background: var(--red); }
+
+  .course-card-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .course-flag {
+    width: 40px; height: 40px; border-radius: var(--radius);
+    background: var(--coral-light); display: flex; align-items: center;
+    justify-content: center; font-size: 20px; flex-shrink: 0;
+  }
+  .course-info { flex: 1; }
+  .course-info h4 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .course-meta { font-size: 12px; color: var(--gray-500); }
+  .course-capacity {
+    display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  }
+  .capacity-bar {
+    flex: 1; height: 4px; background: var(--gray-200); border-radius: 2px;
+    overflow: hidden;
+  }
+  .capacity-fill { height: 100%; background: var(--coral); border-radius: 2px; }
+  .capacity-text { font-size: 11px; color: var(--gray-500); white-space: nowrap; }
+
+  .plan-cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 0 20px;
+  }
+  .plan-card {
+    border: 2px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 20px 16px; text-align: center; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .plan-card:hover { border-color: var(--coral); }
+  .plan-card.selected { border-color: var(--coral); background: var(--coral-light); }
+  .plan-card .plan-duration { font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px; }
+  .plan-card .plan-price { font-size: 28px; font-weight: 700; color: var(--coral); }
+  .plan-card .plan-unit { font-size: 12px; color: var(--gray-500); }
+
+  /* Teacher accent override */
+  .theme-teacher .app-header { border-bottom: 2px solid var(--teal); }
+  .theme-teacher .bottom-nav-item.active { color: var(--teal); }
+  .theme-teacher .btn-primary { background: var(--teal); }
+  .theme-teacher .roster-item:hover { background: var(--teal-light); }
+
+  /* Admin accent override */
+  .theme-admin .app-header { border-bottom: 2px solid var(--amber); }
+  .theme-admin .bottom-nav-item.active { color: var(--amber); }
+  .theme-admin .btn-primary { background: var(--amber); }
+
+  /* Photo upload area */
+  .photo-upload {
+    width: 96px; height: 96px; border-radius: var(--radius-full);
+    border: 2px dashed var(--gray-300); margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--gray-400); font-size: 12px; gap: 4px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .photo-upload:hover { border-color: var(--coral); color: var(--coral); }
+  .photo-upload .upload-icon { font-size: 24px; }
+
+  /* Registration welcome */
+  .welcome-banner {
+    background: linear-gradient(135deg, var(--coral), #FF7B7B);
+    color: white; padding: 32px 24px; text-align: center;
+  }
+  .welcome-banner h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .welcome-banner p { font-size: 14px; opacity: 0.9; }
+
+  /* Admin dashboard */
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 16px 20px;
+  }
+  .stat-card {
+    background: var(--gray-50); border-radius: var(--radius);
+    padding: 16px; text-align: center;
+  }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-800); }
+  .stat-card .stat-label { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+  .member-list-item {
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .member-list-item .member-info { flex: 1; }
+  .member-list-item .member-info h4 { font-size: 14px; font-weight: 600; }
+  .member-list-item .member-info p { font-size: 12px; color: var(--gray-500); }
+
+  /* Success screen */
+  .success-screen {
+    text-align: center; padding: 40px 24px;
+  }
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--green-light); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 16px;
+  }
+  .success-screen h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .success-screen p { color: var(--gray-500); font-size: 14px; }
+
+  /* Expired banner */
+  .expired-banner {
+    background: #FEF2F2; border: 1px solid #FECACA;
+    padding: 12px 16px; margin: 0 20px 16px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #991B1B;
+  }
+  .expired-banner .banner-icon { font-size: 18px; }
+
+  /* Search bar */
+  .search-bar {
+    margin: 12px 20px;
+    padding: 10px 16px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-full);
+    font-size: 14px; color: var(--gray-400);
+    display: flex; align-items: center; gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav-bar">
+  <h1>ISOW Design Directions</h1>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('registration')">Registration</button>
+    <button class="nav-tab" onclick="showTab('membership')">Membership Card</button>
+    <button class="nav-tab" onclick="showTab('courses')">Courses</button>
+    <button class="nav-tab" onclick="showTab('roster')">Teacher Roster</button>
+    <button class="nav-tab" onclick="showTab('admin')">Admin Panel</button>
+    <button class="nav-tab" onclick="showTab('states')">States & Feedback</button>
+  </div>
+</nav>
+
+<!-- ============================================ -->
+<!-- REGISTRATION TAB -->
+<!-- ============================================ -->
+<div id="tab-registration" class="tab-content active">
+  <div class="section-intro">
+    <h2>Registration Flow</h2>
+    <p>The defining experience: scan QR, register, pay, done in 3 minutes. Two approaches to the same flow.</p>
+  </div>
+  <div class="directions-grid">
+
+    <!-- Direction A: Single-page scroll -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>A: Single-Page Scroll</h2>
+        <span class="direction-tag">Recommended</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="welcome-banner">
+            <h2>Become a Member</h2>
+            <p>Free courses, partner discounts, community</p>
+          </div>
+          <div style="padding: 24px 20px;">
+            <div style="margin-bottom: 20px;">
+              <label class="input-label">Full Name</label>
+              <input class="input-field" placeholder="Maria Garcia" />
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label class="input-label">Email</label>
+              <input class="input-field" placeholder="m.garcia@wur.nl" />
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label class="input-label">Password</label>
+              <input class="input-field" type="password" placeholder="Choose a password" />
+            </div>
+            <div style="margin-bottom: 24px; text-align: center;">
+              <label class="input-label" style="text-align: center;">Your Photo</label>
+              <div class="photo-upload">
+                <span class="upload-icon">+</span>
+                <span>Add Photo</span>
+              </div>
+            </div>
+            <label class="input-label">Choose Your Plan</label>
+            <div class="plan-cards" style="padding: 0; margin-bottom: 20px;">
+              <div class="plan-card selected">
+                <div class="plan-duration">12 months</div>
+                <div class="plan-price">&euro;20</div>
+                <div class="plan-unit">Best value</div>
+              </div>
+              <div class="plan-card">
+                <div class="plan-duration">6 months</div>
+                <div class="plan-price">&euro;12.50</div>
+                <div class="plan-unit">&nbsp;</div>
+              </div>
+            </div>
+            <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--gray-600); margin-bottom: 20px; cursor: pointer;">
+              <input type="checkbox" checked style="margin-top: 3px;" />
+              I agree to ISOW storing my data for membership purposes. <a href="#" style="color: var(--coral);">Privacy Policy</a>
+            </label>
+            <button class="btn btn-coral btn-full">Pay &amp; Register</button>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Why this works:</strong> Everything on one scrollable page. No multi-step wizard overhead. The student sees the full picture — name, photo, plan, pay — before committing. Matches the "online checkout" mental model. Fields are generous for mobile thumbs.
+      </div>
+    </div>
+
+    <!-- Direction B: Compact with sections -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>B: Compact Card Sections</h2>
+        <span class="direction-tag" style="background: var(--gray-100); color: var(--gray-600);">Alternative</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">Join</span>
+          </div>
+          <div style="padding: 20px;">
+            <h2 style="font-size: 22px; margin-bottom: 4px;">Join ISOW</h2>
+            <p style="font-size: 13px; color: var(--gray-500); margin-bottom: 20px;">Free courses &middot; Discounts &middot; Community</p>
+
+            <div class="card" style="margin-bottom: 16px;">
+              <div style="padding: 16px;">
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Your Details</h3>
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+                  <div class="photo-upload" style="width: 64px; height: 64px; flex-shrink: 0;">
+                    <span class="upload-icon">+</span>
+                  </div>
+                  <div style="flex: 1;">
+                    <input class="input-field" placeholder="Full name" style="margin-bottom: 8px; padding: 10px 12px; font-size: 14px;" />
+                    <input class="input-field" placeholder="Email" style="padding: 10px 12px; font-size: 14px;" />
+                  </div>
+                </div>
+                <input class="input-field" placeholder="Password" type="password" style="padding: 10px 12px; font-size: 14px;" />
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 16px;">
+              <div style="padding: 16px;">
+                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Membership Plan</h3>
+                <div style="display: flex; gap: 8px;">
+                  <div style="flex: 1; border: 2px solid var(--coral); border-radius: var(--radius); padding: 12px; text-align: center; background: var(--coral-light);">
+                    <div style="font-size: 13px; font-weight: 600;">12 months</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--coral);">&euro;20</div>
+                  </div>
+                  <div style="flex: 1; border: 2px solid var(--gray-200); border-radius: var(--radius); padding: 12px; text-align: center;">
+                    <div style="font-size: 13px; font-weight: 600;">6 months</div>
+                    <div style="font-size: 22px; font-weight: 700; color: var(--gray-700);">&euro;12.50</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--gray-500); margin-bottom: 16px;">
+              <input type="checkbox" checked style="margin-top: 2px;" />
+              I agree to the <a href="#" style="color: var(--coral);">Privacy Policy</a>
+            </label>
+            <button class="btn btn-coral btn-full" style="padding: 14px;">Pay &amp; Register &rarr;</button>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Why this works:</strong> Card-based grouping creates visual sections without multi-step navigation. More compact — less scrolling. Photo upload sits next to name/email for spatial efficiency. Same single-page flow, different visual rhythm.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MEMBERSHIP CARD TAB -->
+<!-- ============================================ -->
+<div id="tab-membership" class="tab-content">
+  <div class="section-intro">
+    <h2>Membership Card</h2>
+    <p>Optimized for showing at a partner business counter. Must be legible, fast, and unmistakable.</p>
+  </div>
+  <div class="directions-grid">
+
+    <!-- Card Direction A -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>A: Full Card Display</h2>
+        <span class="direction-tag">Recommended</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="membership-card-display">
+            <div class="membership-card-top">
+              <div class="card-avatar">M</div>
+              <h3>Maria Garcia</h3>
+              <p>Member since Oct 2025</p>
+            </div>
+            <div class="membership-card-bottom">
+              <div class="membership-detail">
+                <span class="label">Status</span>
+                <span class="badge badge-green">Active Member</span>
+              </div>
+              <div class="membership-detail">
+                <span class="label">Valid until</span>
+                <span class="value">15 Oct 2026</span>
+              </div>
+              <div class="membership-detail">
+                <span class="label">Member ID</span>
+                <span class="value">#1042</span>
+              </div>
+              <div class="membership-detail">
+                <span class="label">Plan</span>
+                <span class="value">12 months</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 0 20px 20px; display: flex; gap: 8px;">
+            <button class="btn btn-outline" style="flex: 1; font-size: 13px; padding: 10px;">Export PDF</button>
+            <button class="btn btn-outline" style="flex: 1; font-size: 13px; padding: 10px;">My Profile</button>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Counter-optimized:</strong> Large photo, name, and green "Active" status immediately visible. The shop employee can verify membership in 2 seconds without touching the phone. Card metaphor with coral header matches ISOW branding.
+      </div>
+    </div>
+
+    <!-- Card Direction B: Expired state -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>B: Expired State</h2>
+        <span class="direction-tag" style="background: #FEF2F2; color: var(--red);">Expired</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+            <span class="badge badge-red">Expired</span>
+          </div>
+          <div class="expired-banner">
+            <span class="banner-icon">!</span>
+            <span>Your membership expired on 15 Mar 2026. Renew to keep attending courses.</span>
+          </div>
+          <div class="membership-card-display" style="opacity: 0.7;">
+            <div class="membership-card-top" style="background: var(--gray-400);">
+              <div class="card-avatar" style="background: rgba(255,255,255,0.15);">L</div>
+              <h3>Lucas van Berg</h3>
+              <p style="opacity: 0.7;">Expired 15 Mar 2026</p>
+            </div>
+            <div class="membership-card-bottom">
+              <div class="membership-detail">
+                <span class="label">Status</span>
+                <span class="badge badge-red">Expired</span>
+              </div>
+              <div class="membership-detail">
+                <span class="label">Expired on</span>
+                <span class="value" style="color: var(--red);">15 Mar 2026</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 0 20px 20px;">
+            <button class="btn btn-coral btn-full">Renew Membership</button>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Expired UX:</strong> Card visually grayed out with red "Expired" badge — unmistakable status. Clear banner explains what happened and what to do. "Renew Membership" button is the primary action. Same layout as active — consistency even in error states.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- COURSES TAB -->
+<!-- ============================================ -->
+<div id="tab-courses" class="tab-content">
+  <div class="section-intro">
+    <h2>Course Browsing & Enrollment</h2>
+    <p>Members browse, find courses, and enroll. Must be instantly parseable after months away.</p>
+  </div>
+  <div class="directions-grid">
+
+    <!-- Course list -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Course List View</h2>
+        <span class="direction-tag">Member View</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">Courses</span>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 20px; margin-bottom: 4px;">Language Courses</h2>
+            <p style="font-size: 12px; color: var(--gray-500);">Q2 2026 &middot; All courses free for members</p>
+          </div>
+          <div class="course-card-item">
+            <div class="course-flag">&#127475;&#127473;</div>
+            <div class="course-info">
+              <h4>Dutch Beginners</h4>
+              <div class="course-meta">Mon 18:00 &middot; Forum 123</div>
+              <div class="course-capacity">
+                <div class="capacity-bar"><div class="capacity-fill" style="width: 70%;"></div></div>
+                <span class="capacity-text">14/20</span>
+              </div>
+            </div>
+            <button class="btn btn-coral" style="padding: 8px 16px; font-size: 13px;">Enroll</button>
+          </div>
+          <div class="course-card-item">
+            <div class="course-flag">&#127471;&#127477;</div>
+            <div class="course-info">
+              <h4>Japanese Beginners</h4>
+              <div class="course-meta">Tue 17:00 &middot; Forum 205</div>
+              <div class="course-capacity">
+                <div class="capacity-bar"><div class="capacity-fill" style="width: 90%;"></div></div>
+                <span class="capacity-text">18/20</span>
+              </div>
+            </div>
+            <button class="btn btn-coral" style="padding: 8px 16px; font-size: 13px;">Enroll</button>
+          </div>
+          <div class="course-card-item">
+            <div class="course-flag">&#127466;&#127480;</div>
+            <div class="course-info">
+              <h4>Spanish Beginners</h4>
+              <div class="course-meta">Wed 18:00 &middot; Forum 123</div>
+              <div class="course-capacity">
+                <div class="capacity-bar"><div class="capacity-fill" style="width: 45%;"></div></div>
+                <span class="capacity-text">9/20</span>
+              </div>
+            </div>
+            <button class="btn btn-coral" style="padding: 8px 16px; font-size: 13px;">Enroll</button>
+          </div>
+          <div class="course-card-item" style="opacity: 0.5;">
+            <div class="course-flag">&#127467;&#127479;</div>
+            <div class="course-info">
+              <h4>French</h4>
+              <div class="course-meta" style="color: var(--gray-400);">Currently unavailable</div>
+            </div>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 20px; margin-bottom: 4px;">Dance Courses</h2>
+          </div>
+          <div class="course-card-item">
+            <div class="course-flag" style="background: #FFF0F5;">&#128131;</div>
+            <div class="course-info">
+              <h4>Salsa Beginners</h4>
+              <div class="course-meta">Wed 19:00 &middot; Global Lounge</div>
+              <div class="course-capacity">
+                <div class="capacity-bar"><div class="capacity-fill" style="width: 60%;"></div></div>
+                <span class="capacity-text">12/20</span>
+              </div>
+            </div>
+            <button class="btn btn-coral" style="padding: 8px 16px; font-size: 13px;">Enroll</button>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item active"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Instantly parseable:</strong> Flag icons from the ISOW website pattern. Course name, day/time, location visible without tapping. Capacity bar shows availability at a glance. "Enroll" button inline — one tap action, no detail page required for simple enrollment.
+      </div>
+    </div>
+
+    <!-- Enrolled state -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Enrolled State</h2>
+        <span class="direction-tag" style="background: var(--green-light); color: #15803D;">Enrolled</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">My Courses</span>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 20px; margin-bottom: 4px;">My Courses</h2>
+            <p style="font-size: 12px; color: var(--gray-500);">You're enrolled in 2 courses</p>
+          </div>
+          <div class="course-card-item" style="background: var(--green-light); border-left: 3px solid var(--green);">
+            <div class="course-flag">&#127466;&#127480;</div>
+            <div class="course-info">
+              <h4>Spanish Beginners <span class="badge badge-green" style="font-size: 10px;">Enrolled</span></h4>
+              <div class="course-meta">Wed 18:00 &middot; Forum 123</div>
+              <div style="margin-top: 6px;">
+                <a href="#" style="font-size: 12px; color: var(--coral); text-decoration: none;">WhatsApp Group &rarr;</a>
+              </div>
+            </div>
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; color: var(--gray-500);">Unenroll</button>
+          </div>
+          <div class="course-card-item" style="background: var(--green-light); border-left: 3px solid var(--green);">
+            <div class="course-flag" style="background: #FFF0F5;">&#128131;</div>
+            <div class="course-info">
+              <h4>Salsa Beginners <span class="badge badge-green" style="font-size: 10px;">Enrolled</span></h4>
+              <div class="course-meta">Wed 19:00 &middot; Global Lounge</div>
+              <div style="margin-top: 6px;">
+                <a href="#" style="font-size: 12px; color: var(--coral); text-decoration: none;">WhatsApp Group &rarr;</a>
+              </div>
+            </div>
+            <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; color: var(--gray-500);">Unenroll</button>
+          </div>
+          <div style="padding: 20px; text-align: center;">
+            <a href="#" style="color: var(--coral); font-size: 14px; font-weight: 500; text-decoration: none;">Browse all courses &rarr;</a>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item active"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>After enrollment:</strong> Enrolled courses highlighted with green border and badge. WhatsApp group link visible — the bridge to course communication. "Unenroll" is secondary/subtle. "Browse all courses" for discovering more.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TEACHER ROSTER TAB -->
+<!-- ============================================ -->
+<div id="tab-roster" class="tab-content">
+  <div class="section-intro">
+    <h2>Teacher Roster</h2>
+    <p>The weekly heartbeat. Photo grid with status badges — 5 minutes before class on a phone.</p>
+  </div>
+  <div class="directions-grid">
+
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Photo Grid Roster</h2>
+        <span class="direction-tag" style="background: var(--teal-light); color: var(--teal);">Teacher View</span>
+      </div>
+      <div class="phone-frame theme-teacher">
+        <div class="phone-status-bar">17:55</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--teal);">
+            <span class="logo" style="color: var(--teal);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">Teacher</span>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 18px;">Japanese Beginners</h2>
+            <p style="font-size: 12px; color: var(--gray-500);">Tue 17:00 &middot; Forum 205 &middot; Q2 2026</p>
+            <p style="font-size: 13px; color: var(--teal); font-weight: 600; margin-top: 4px;">14 enrolled &middot; 1 expired</p>
+          </div>
+          <div class="roster-grid">
+            <div class="roster-item">
+              <div class="roster-avatar">A<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Ana Silva</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">B<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Ben Zhou</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">C<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Clara Mol</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">D<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Davi Costa</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">E<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Elena Pop</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">F<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Fatima Ali</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">G<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Gael Ruiz</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">H<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Hana Kim</div>
+            </div>
+            <div class="roster-item" style="background: #FEF2F2; border: 1px solid #FECACA;">
+              <div class="roster-avatar" style="opacity: 0.6;">T<div class="roster-status-dot expired"></div></div>
+              <div class="roster-name" style="color: var(--red);">Tom de Wit</div>
+              <div style="font-size: 10px; color: var(--red); font-weight: 600;">EXPIRED</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">J<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Jun Tanaka</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">K<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Kira Novak</div>
+            </div>
+            <div class="roster-item">
+              <div class="roster-avatar">L<div class="roster-status-dot active"></div></div>
+              <div class="roster-name">Liam Chen</div>
+            </div>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active" style="color: var(--teal);"><span class="nav-icon">&#9776;</span>Roster</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Teacher accent (teal):</strong> Immediately signals "teacher mode." Photo grid with green/red status dots — Priya sees 14 faces, spots Tom's red expired badge instantly. Expired member highlighted with red background. Course info at top: name, time, location, enrolled count.
+      </div>
+    </div>
+
+    <!-- Roster list view -->
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>List Roster (Alternative)</h2>
+        <span class="direction-tag" style="background: var(--teal-light); color: var(--teal);">Teacher View</span>
+      </div>
+      <div class="phone-frame theme-teacher">
+        <div class="phone-status-bar">17:55</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--teal);">
+            <span class="logo" style="color: var(--teal);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">Teacher</span>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 18px;">Japanese Beginners</h2>
+            <p style="font-size: 12px; color: var(--gray-500);">Tue 17:00 &middot; Forum 205 &middot; 14 enrolled</p>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">A</div>
+            <div class="member-info"><h4>Ana Silva</h4><p>Active &middot; Enrolled Oct 2025</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">B</div>
+            <div class="member-info"><h4>Ben Zhou</h4><p>Active &middot; Enrolled Oct 2025</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">C</div>
+            <div class="member-info"><h4>Clara Mol</h4><p>Active &middot; Enrolled Nov 2025</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item" style="background: #FEF2F2;">
+            <div class="avatar" style="opacity: 0.6;">T</div>
+            <div class="member-info"><h4 style="color: var(--red);">Tom de Wit</h4><p style="color: var(--red);">Expired 8 Mar 2026</p></div>
+            <span class="badge badge-red">Expired</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">D</div>
+            <div class="member-info"><h4>Davi Costa</h4><p>Active &middot; Enrolled Oct 2025</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">E</div>
+            <div class="member-info"><h4>Elena Pop</h4><p>Active &middot; Enrolled Dec 2025</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active" style="color: var(--teal);"><span class="nav-icon">&#9776;</span>Roster</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>List alternative:</strong> More detail per student (enrollment date, explicit status text). Better for smaller classes. Less glanceable than the grid for face recognition. Could work as a toggle option (grid/list view).
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ADMIN TAB -->
+<!-- ============================================ -->
+<div id="tab-admin" class="tab-content">
+  <div class="section-intro">
+    <h2>Admin Panel</h2>
+    <p>Progressive disclosure: calm dashboard, everything one tap away. Amber accent for admin mode.</p>
+  </div>
+  <div class="directions-grid">
+
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Admin Dashboard</h2>
+        <span class="direction-tag" style="background: var(--amber-light); color: var(--amber);">Admin View</span>
+      </div>
+      <div class="phone-frame theme-admin">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--amber);">
+            <span class="logo" style="color: var(--amber);">ISOW</span>
+            <span class="badge badge-amber">Admin</span>
+          </div>
+          <div style="padding: 16px 20px 8px;">
+            <h2 style="font-size: 20px;">Dashboard</h2>
+            <p style="font-size: 12px; color: var(--gray-500);">Last backup: today 06:00</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-value">847</div>
+              <div class="stat-label">Total Members</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">23</div>
+              <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">16</div>
+              <div class="stat-label">Active Courses</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">12</div>
+              <div class="stat-label">Expiring Soon</div>
+            </div>
+          </div>
+          <div style="padding: 8px 20px;">
+            <h3 style="font-size: 14px; color: var(--gray-500); margin-bottom: 8px;">Quick Actions</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn btn-amber btn-full" style="justify-content: flex-start; padding: 14px 16px;">+ Register New Member (Cash)</button>
+              <button class="btn btn-outline btn-full" style="justify-content: flex-start; padding: 14px 16px;">Manage Members</button>
+              <button class="btn btn-outline btn-full" style="justify-content: flex-start; padding: 14px 16px;">Manage Courses</button>
+              <button class="btn btn-outline btn-full" style="justify-content: flex-start; padding: 14px 16px;">Export Data (Excel)</button>
+            </div>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active" style="color: var(--amber);"><span class="nav-icon">&#9632;</span>Admin</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Progressive disclosure:</strong> Dashboard shows the essentials — member count, recent activity, last backup. Quick Actions prioritize the most common task (cash registration). Everything else is one tap into "Manage Members" or "Manage Courses." Amber accent signals admin mode instantly.
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Member Management</h2>
+        <span class="direction-tag" style="background: var(--amber-light); color: var(--amber);">Admin View</span>
+      </div>
+      <div class="phone-frame theme-admin">
+        <div class="phone-status-bar">9:41</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--amber);">
+            <span class="logo" style="color: var(--amber);">ISOW</span>
+            <span style="font-size: 13px; color: var(--gray-500);">Members</span>
+          </div>
+          <div class="search-bar">
+            <span>&#128269;</span> Search members...
+          </div>
+          <div style="padding: 4px 20px 8px; display: flex; gap: 6px;">
+            <span class="badge" style="background: var(--amber); color: white; cursor: pointer;">All (847)</span>
+            <span class="badge" style="background: var(--gray-100); color: var(--gray-600); cursor: pointer;">Active (792)</span>
+            <span class="badge" style="background: var(--gray-100); color: var(--gray-600); cursor: pointer;">Expired (55)</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">M</div>
+            <div class="member-info"><h4>Maria Garcia</h4><p>m.garcia@wur.nl &middot; 12mo plan</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">W</div>
+            <div class="member-info"><h4>Wei Zhang</h4><p>w.zhang@wur.nl &middot; Cash &middot; 12mo</p></div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">L</div>
+            <div class="member-info"><h4>Lucas van Berg</h4><p>l.vanberg@wur.nl &middot; 6mo plan</p></div>
+            <span class="badge badge-red">Expired</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">P</div>
+            <div class="member-info"><h4>Priya Sharma</h4><p>p.sharma@wur.nl &middot; Teacher</p></div>
+            <span class="badge" style="background: var(--teal-light); color: var(--teal);">Teacher</span>
+          </div>
+          <div class="member-list-item">
+            <div class="avatar">A</div>
+            <div class="member-info"><h4>Ahmed Hassan</h4><p>a.hassan@wur.nl &middot; Teacher</p></div>
+            <span class="badge" style="background: var(--teal-light); color: var(--teal);">Teacher</span>
+          </div>
+          <div class="phone-bottom-nav">
+            <div class="bottom-nav-item active" style="color: var(--amber);"><span class="nav-icon">&#9632;</span>Admin</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9776;</span>Courses</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9673;</span>Card</div>
+            <div class="bottom-nav-item"><span class="nav-icon">&#9881;</span>Profile</div>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Member management:</strong> Search + filter (All/Active/Expired). Each member shows key info: name, email, plan, payment method (Cash badge for manually registered). Role badges (Teacher in teal). Tapping a member opens their detail/edit view.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- STATES & FEEDBACK TAB -->
+<!-- ============================================ -->
+<div id="tab-states" class="tab-content">
+  <div class="section-intro">
+    <h2>States & Feedback</h2>
+    <p>Registration success, error handling, and the post-payment confirmation moment.</p>
+  </div>
+  <div class="directions-grid">
+
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Registration Success</h2>
+        <span class="direction-tag" style="background: var(--green-light); color: #15803D;">Success</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:44</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+          </div>
+          <div class="success-screen">
+            <div class="success-icon">&#10003;</div>
+            <h2>Welcome to ISOW!</h2>
+            <p>Your membership is active. Here's your digital card.</p>
+          </div>
+          <div class="membership-card-display" style="margin-top: 0;">
+            <div class="membership-card-top">
+              <div class="card-avatar">M</div>
+              <h3>Maria Garcia</h3>
+              <p>Member #1042</p>
+            </div>
+            <div class="membership-card-bottom">
+              <div class="membership-detail">
+                <span class="label">Status</span>
+                <span class="badge badge-green">Active</span>
+              </div>
+              <div class="membership-detail">
+                <span class="label">Valid until</span>
+                <span class="value">15 Oct 2026</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn btn-coral btn-full">Browse Courses</button>
+            <button class="btn btn-outline btn-full">Add to Home Screen</button>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>The defining moment:</strong> Green checkmark, "Welcome to ISOW!", and the membership card displayed immediately. The card IS the confirmation. "Browse Courses" is the natural next action. "Add to Home Screen" for PWA install.
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-header">
+        <h2>Payment Error</h2>
+        <span class="direction-tag" style="background: #FEF2F2; color: var(--red);">Error</span>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-status-bar">9:44</div>
+        <div class="phone-content">
+          <div class="app-header" style="border-bottom: 2px solid var(--coral);">
+            <span class="logo" style="color: var(--coral);">ISOW</span>
+          </div>
+          <div style="padding: 40px 24px; text-align: center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: #FEF2F2; color: var(--red); display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 16px;">!</div>
+            <h2 style="font-size: 22px; margin-bottom: 8px;">Payment Cancelled</h2>
+            <p style="color: var(--gray-500); font-size: 14px; margin-bottom: 24px;">Your payment was cancelled or didn't go through. No money was charged. You can try again.</p>
+            <button class="btn btn-coral btn-full" style="margin-bottom: 8px;">Try Again</button>
+            <button class="btn btn-outline btn-full">Choose a Different Bank</button>
+            <p style="margin-top: 24px; font-size: 12px; color: var(--gray-400);">Need help? Contact <a href="#" style="color: var(--coral);">isow@wur.nl</a></p>
+          </div>
+        </div>
+      </div>
+      <div class="direction-notes">
+        <strong>Errors are conversations:</strong> Clear explanation — "cancelled, not charged." Two actions: try again (same bank) or pick different bank. Contact link for edge cases. No jargon, no error codes, no dead ends.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>
