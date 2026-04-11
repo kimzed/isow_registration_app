@@ -369,7 +369,7 @@ Decisions that require board input before or during development:
 - **FR6:** Member can reset their password
 - **FR7:** Expired member can renew their membership by selecting a plan and paying via iDEAL
 - **FR8:** Member can delete their own account and all associated data (GDPR self-service)
-- **FR9:** Member receives an email notification when their membership is about to expire or has expired
+- **FR9:** Member receives an email notification 7 days before membership expiry and on the expiry date
 
 ### Digital Membership Card
 
@@ -429,7 +429,7 @@ Decisions that require board input before or during development:
 ### Authentication & Authorization
 
 - **FR44:** System enforces role-based access: member, teacher, admin, superadmin — each with increasing permissions
-- **FR45:** System rate-limits login and registration attempts
+- **FR45:** System rate-limits login and registration attempts to 5 per minute per IP address
 - **FR46:** New accounts created by admin receive an email invitation to set their password
 
 ### GDPR & Privacy
@@ -451,7 +451,7 @@ Decisions that require board input before or during development:
 - Roster view with photos loads within 3 seconds for courses up to 30 students
 - Photo upload processes (compress, store) within 5 seconds
 - iDEAL payment redirect completes within 3 seconds (Mollie-dependent)
-- "Show Membership" screen displays instantly (no network-dependent content beyond initial load)
+- "Show Membership" screen displays under 500ms (no network-dependent content beyond initial load)
 - System handles 50 concurrent users without degradation — sufficient for orientation week peak
 - Admin Excel export generates within 10 seconds for up to 5,000 member records
 - No cold starts: production hosting must not have idle spindown
