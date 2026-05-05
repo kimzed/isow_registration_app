@@ -1,17 +1,28 @@
 ---
 title: 'ISOW Registration App — Decisions for the Board'
-status: 'draft'
+status: 'partially resolved'
 created: '2026-04-11'
+updated: '2026-05-05'
 audience: 'ISOW Board (non-technical)'
 ---
 
 # ISOW Registration App — Decisions for the Board
 
-This document summarizes three decisions that need board input before the app can go live. The app itself is being built independently of these choices — they only affect where and how it runs in production.
+This document originally listed three decisions for the board. **Two are now resolved** (hosting and credential custody — see notes below). **One remains open**: who on the board is the app's "system steward."
+
+None of the remaining decision blocks development or even deployment — they are recommendations for how ISOW operates the app over time.
 
 ---
 
-## 1. Where does the app live? (Hosting)
+## 1. Where does the app live? (Hosting) — RESOLVED
+
+**Decision: Hetzner Cloud (~EUR 42/year, data stored in Germany or Finland).**
+
+The board approved Hetzner Cloud on 2026-05-05. The full evaluation of the alternatives (PythonAnywhere, Railway, WUR-managed server, local computer) is retained below for reference and historical context.
+
+---
+
+### Original evaluation (kept for reference)
 
 The app needs a computer that's always on and connected to the internet, so members can register and teachers can check rosters at any time. This is called "hosting." There are several options, each with different trade-offs.
 
@@ -101,47 +112,37 @@ A small computer (like a Raspberry Pi) running at the ISOW office.
 
 ---
 
-## 2. Should the board use a shared password manager?
+## 2. How are passwords handed over between boards? — RESOLVED
 
-The app introduces several new accounts and credentials that the board needs to manage:
+**Decision: Gmail-anchored model. No shared password manager needed.**
 
-- The ISOW superadmin account (for managing the app)
-- The hosting account (wherever the app runs)
-- The Mollie account (payment processing)
-- The Gmail app password (for sending automated emails)
-- The Cloudflare account (website security)
+The app introduces several new accounts and credentials (hosting, Mollie payment processing, Cloudflare, the Gmail app password, the ISOW superadmin account). These need to survive every board turnover.
 
-These credentials need to survive board turnovers — every 6 months. If credentials are lost during a handover, the board loses control of the app, payments, or hosting. Recovering access can be difficult or impossible.
+Rather than introducing a shared password manager (which would add ongoing onboarding friction for every incoming board member), the app uses a simpler model that takes advantage of something ISOW already has: **the organizational Gmail account.**
 
-### The problem without a password manager
+### How it works
 
-Today, ISOW likely passes credentials through WhatsApp messages, shared documents, or verbal handovers. This works until it doesn't — one missed message, one outgoing board member who forgets to share a password, and access is lost.
+- **Every third-party account is registered using the ISOW Gmail address** (not a personal email). This applies to the hosting account, Mollie, Cloudflare, the domain registrar, and any future service.
+- The ISOW Gmail account becomes the "master key" — whoever holds it can perform a password reset on every other service and immediately take over.
+- During board handover, the only credential that needs to be passed is the **ISOW Gmail password**. Everything else can be reset from there.
+- The current operator (the developer or whoever runs the app day-to-day) keeps a copy of the active credentials in whatever personal password manager they prefer. This is a personal choice, not an organizational requirement.
 
-With the app adding 5+ new credentials on top of whatever ISOW already manages (website, email, social media, bank), the risk of losing something during handover grows.
+### Why this works for ISOW
 
-### What a password manager does
+- **No new tool to learn or maintain.** The board already uses Gmail.
+- **One thing to hand over instead of many.** Pass the Gmail password — everything else follows.
+- **No vendor lock-in.** If a future board wants to adopt a shared password manager later, they can do so at any time without rework.
+- **Realistic for ISOW's scale.** A shared vault makes sense when multiple people operate the system at the same time. ISOW's app has one operator at a time.
 
-A password manager is a secure app where all credentials are stored in one place, protected by a single master password. The board shares one vault — anyone with access can see all stored passwords. During handover, the outgoing board transfers the master password to the incoming board, and everything else comes with it automatically.
+### What the board needs to do
 
-### The options
+- Make sure ISOW Gmail uses a strong password and that 2-factor authentication recovery codes are stored in a known place (printed copy held by the chair, for example).
+- During handover, pass the Gmail password to the incoming board. That's it.
+- The operations runbook (a separate document the developer will produce) lists every account that's registered against ISOW Gmail, so the new operator knows what they have access to.
 
-**Option A: Adopt a password manager (recommended)**
+### Open follow-up (not blocking)
 
-We recommend **Bitwarden**, which offers a free plan for small organizations:
-
-- Free, no credit card required
-- Works on all devices (phone, laptop, browser)
-- End-to-end encrypted — only people with the master password can see the contents
-- One master password to hand over during board transition — all other credentials come with it
-- Can also be used for ISOW's existing accounts (website, social media, bank), not just the app
-
-**Option B: Continue without one**
-
-The board continues passing credentials however they currently do. This works, but the risk of lost access during handover increases with every new account the app introduces. If a credential is lost, recovering it may require contacting service providers, proving organizational identity, and waiting — potentially leaving the app non-functional during a critical period like orientation week.
-
-### Board decision needed
-
-Does the board want to adopt a shared password manager for ISOW credentials? This is not just about the app — it's about how ISOW manages all its digital accounts across board turnovers.
+If ISOW already uses a shared vault for other things (website login, social media, bank), the app credentials can be added there too — but this is optional and doesn't change the deployment plan.
 
 ---
 
@@ -168,13 +169,13 @@ This is an organizational role, not a technical one. The app is designed to be s
 
 ## Summary
 
-| Decision | Recommendation | Board action needed |
+| Decision | Status | Outcome / Action |
 |---|---|---|
-| **Hosting** | Ask WUR IT first. If not available, Hetzner Cloud (~EUR 42/year) | Someone contacts WUR IT to ask about hosting for student organizations |
-| **Password manager** | Adopt Bitwarden free for all ISOW credentials | Board decides whether to adopt a shared password manager |
-| **System steward** | Course Coordinator | Board confirms which position is responsible |
+| **Hosting** | RESOLVED (2026-05-05) | Hetzner Cloud (~EUR 42/year, EU data centers) |
+| **Password handover** | RESOLVED (2026-05-05) | Gmail-anchored model — no shared password manager. Register every account against ISOW Gmail; hand over only the Gmail password between boards. |
+| **System steward** | OPEN | Recommended: Course Coordinator. Board confirms which position is responsible before the app is handed off to a new board. |
 
-These decisions don't block development — the app is being built and tested locally. But they need to be made before the app can go live for members.
+The remaining open decision does not block development or even deployment — it is a recommendation for how the board operates the app over time.
 
 ---
 

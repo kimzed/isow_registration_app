@@ -331,11 +331,11 @@ Decisions that require board input before or during development:
 
 | Decision | Options | Impact | When needed |
 |---|---|---|---|
-| **Hosting provider** | Hetzner (~EUR 3.29/mo), Google Cloud free tier, Railway ($5/mo), WUR hosting (free?), PythonAnywhere (free), Oracle Cloud (free but risky), Raspberry Pi (~EUR 50 once) | Cost, reliability, maintenance burden | Before deployment |
+| **Hosting provider** | RESOLVED 2026-05-05 — Hetzner Cloud CX23 (~EUR 3.49/mo, Germany/Finland data centers) | Cost, reliability, maintenance burden | — |
 | **Security maintenance** | Budget for occasional developer time vs. accept increasing risk vs. delegate to digital committee/CS student volunteer | Long-term app security | Before deployment |
 | **Mollie account ownership** | Which board role signs up, which IBAN is linked, who holds API keys | Payment processing setup | Before development |
 | **System steward role** | Which board position owns app operations (recommended: Course Coordinator) | Operational responsibility | Before deployment |
-| **Shared password manager** | Adopt Bitwarden free org (or confirm existing solution) | Credential management across board turnovers | Before deployment |
+| **Credential custody** | RESOLVED 2026-05-05 — Gmail-anchored model (every account registered against ISOW Gmail; no shared password manager). See architecture Decision 2. | Credential management across board turnovers | — |
 | **Go-live confidence** | Define testing criteria that must pass before making the app the primary registration method | Determines when Google Form fallback can be retired | Before go-live |
 | **Course attendance tracking** | Add post-MVP or not — teachers mark who showed up per session | Extra teacher workload vs. data value | Post-MVP |
 | **Analytics dashboard** | Add post-MVP or not — registration trends, course popularity | Development effort vs. insight value | Post-MVP |

@@ -16,10 +16,14 @@ inputDocuments:
   - 'product-brief-isow_registration_app.md'
   - 'product-brief-isow_registration_app-distillate.md'
   - 'ux-design-specification.md'
+  - 'excel-data-assessment.md'
 workflowType: 'architecture'
 project_name: 'isow_registration_app'
 user_name: 'Cedric'
 date: '2026-04-11'
+revisions:
+  - date: '2026-05-05'
+    summary: 'Hosting decided (Hetzner Cloud CX23); migration scope narrowed to active-only members based on Excel data assessment; Member model extended with phone/nationality/occupation/notes; credential custody resolved as Gmail-anchored model (no shared password manager).'
 ---
 
 # Architecture Decision Document
@@ -178,10 +182,10 @@ uv run django-admin startproject config .
 - Frontend architecture (WhiteNoise, PWA scope, photo compression)
 - Deployment approach (Gunicorn, git-based deploy, .env config)
 
-**Deferred to Board (Block Deployment, Not Development):**
-- Hosting provider selection
-- Shared password manager
-- System steward role assignment
+**Recommended Board Decisions (Do Not Block Deployment):**
+- System steward role assignment — purely a designation; the app runs whether or not someone holds the title.
+
+_Resolved 2026-05-05: hosting provider (Hetzner Cloud CX23); credential custody model (Gmail-anchored — no shared password manager needed)._
 
 ### Data Architecture
 
@@ -190,7 +194,11 @@ uv run django-admin startproject config .
 | Photo storage | Local filesystem via Django `ImageField` | ~500MB/year at ISOW's scale. No object storage needed. File path stored in database, file on disk under `MEDIA_ROOT/photos/`. Deleted with member on GDPR removal. |
 | Excel library | openpyxl | Standard Python `.xlsx` library. One format for backup export, admin export, Google Sheets migration import, and backup restore. |
 | Caching | None | 50 concurrent users, ~1000 members. PostgreSQL handles all queries directly. No Redis, no Memcached. If a page is slow, optimize the query. |
-| Data migration | Django management command + standardized Excel | `manage.py import_members` reads the same `.xlsx` format used for backup/restore. Google Sheets exported to `.xlsx` first. One-time migration, reusable code path. |
+| Data migration | Django management command + standardized Excel | `manage.py import_members` reads the same `.xlsx` format used for backup/restore. Google Sheets exported to `.xlsx` first. One-time migration, reusable code path. See **Migration Scope** below for active-only cohort rules. |
+| Migration scope | Active members only | Of 2,010 historical rows in the Excel, only the ~257 with a future expiration date are imported. Recently-expired members re-register through the normal flow. The 16 rows with status `close` are part of the active cohort and are migrated. |
+| Migration data rules | Email required, all other fields optional | The "paid = exists" invariant means the only field the system strictly needs is `email` (for login + invitation). `name`, `phone`, `nationality`, `occupation`, `notes` are imported as-is from Excel without normalization — members can correct their own profile after first login. The 1 active row missing an email requires manual decision before import. |
+| Payment history migration | Filtered to active members | The Excel's 656 historical payment records are filtered to the ~237 belonging to the migrated active members and imported as `Payment` rows. Payments tied to non-migrated members are left in the Excel archive. |
+| Photo migration | None — uploaded on first login | The Excel contains no member photos. All 257 migrated members start photoless; the teacher roster shows a placeholder (initials/silhouette) until a photo is uploaded. |
 
 ### Authentication & Security
 
@@ -215,7 +223,7 @@ uv run django-admin startproject config .
 | Decision | Choice | Rationale |
 |---|---|---|
 | Static file serving | WhiteNoise | Serves static files from Django process. Gzip + cache headers automatic. No Nginx needed for static. One middleware line. |
-| Media files (photos) | Django serves in dev; finalized with hosting decision | At ISOW's scale, Django can serve media in production too. If Nginx is present, it can take over `/media/`. App code unchanged either way. |
+| Media files (photos) | Django serves directly in production | At ISOW's scale (~500MB/year of photos), Django serving from `MEDIA_ROOT` is sufficient on the Hetzner CX23's 40GB SSD. No Nginx needed. If a future board decides to add Nginx as a reverse proxy, taking over `/media/` is a config change, not a code change. |
 | PWA | Install prompt only, no caching | Minimal service worker for "Add to Home Screen" + manifest (icon, splash, theme). No offline cache — all actions require network. Avoids stale cache bugs. |
 | Photo compression | Browser-native canvas API | ~30 lines vanilla JS in template partial. Resize to max 800px, export JPEG ~80% quality before upload. No npm package, no build step. Server-side validation (5MB, JPEG/PNG) as safety net. |
 
@@ -223,18 +231,27 @@ uv run django-admin startproject config .
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| WSGI server | Gunicorn | Standard Django production server. Workers = `2 * CPU + 1`. Constant regardless of hosting. |
-| Deployment | Git-based with deploy script | CI runs on push (tests, lint, types). Production: `deploy.sh` runs git pull, uv sync, migrate, collectstatic, restart Gunicorn. No Docker. |
-| Database | PostgreSQL on same server | Single-machine deployment. No managed database service at this scale. Belt-and-suspenders backup: weekly Excel export + `pg_dump` via cron. |
+| Hosting | **Hetzner Cloud CX23** (decided 2026-05-05) | 2 vCPU, 4GB RAM, 40GB NVMe SSD, 20TB traffic, EU data residency (Germany/Finland), ~€42/yr. Selected after evaluation of alternatives (see Board Decision Brief below). |
+| Operating system | Ubuntu 24.04 LTS | Long-term support until 2029, standard target for Django deployments, well-documented. |
+| Process management | systemd unit for Gunicorn | Auto-restart on failure, boot-time startup, logs to journald. Single `/etc/systemd/system/isow.service` file checked into the repo. |
+| Firewall | ufw with allow 22/80/443 only | Default-deny inbound; SSH key-only login (no password auth). |
+| OS security updates | unattended-upgrades | Automatic install of security patches. Pinned application dependencies are still upgraded manually. |
+| WSGI server | Gunicorn | Standard Django production server. Workers = `2 * CPU + 1` (so 5 workers on CX23). |
+| Deployment | Git-based with deploy script | CI runs on push (tests, lint, types). Production: `deploy.sh` runs git pull, uv sync, migrate, collectstatic, systemctl restart isow. No Docker. |
+| Database | PostgreSQL on same server | Single-machine deployment. No managed database service at this scale. Belt-and-suspenders backup: weekly Excel export + `pg_dump` via cron, both retained on the server and emailed off-server. |
 | SSL/TLS | Cloudflare edge + origin certificate | Cloudflare handles edge SSL (free). Origin encrypted via Cloudflare origin cert (free, 15-year validity). Zero certificate renewal headaches. |
 | Environment config | `.env` + python-dotenv | All secrets in `.env` on server. Never in code, never in git. Same pattern as reference stack. |
 | Container | None (no Docker) | Django runs directly on the server. Simpler to debug, maintain, and understand for future volunteers. If portability needed later, adding a Dockerfile is straightforward. |
 
 ### Board Decision Brief: Infrastructure
 
-Three decisions require board input before deployment. Development proceeds independently — the app runs on localhost during development regardless of hosting choice. A separate non-technical board decision document will be produced for these items.
+One decision remains open for the board (system steward role) and does not block deployment — it is purely a designation, recommended before the app is handed off to future boards. The other two decisions (hosting provider, credential custody model) are resolved.
 
-#### Decision 1: Hosting Provider
+#### Decision 1: Hosting Provider — RESOLVED (2026-05-05)
+
+**Decision: Hetzner Cloud CX23.** The board approved the recommendation. The evaluation table below is retained for reference. Implementation now assumes a Hetzner CX23 host (Ubuntu 24.04 LTS) — see Infrastructure & Deployment section above for the resulting application-level configuration.
+
+#### Decision 1 evaluation table (reference)
 
 | | Hetzner Cloud CX23 | Railway Hobby | PythonAnywhere EU | WUR-Managed Server | Local Computer (Global Lounge) |
 |---|---|---|---|---|---|
@@ -256,11 +273,23 @@ Three decisions require board input before deployment. Development proceeds inde
 
 **Recommendation:** Hetzner Cloud CX23 as the safe default — cheapest paid option, EU-native, generous specs. However, **WUR-managed server is the best option if available** — free, EU, professionally managed, university-grade reliability. ISOW should inquire with WUR IT before committing to a paid service. Local computer at Global Lounge is not recommended — office internet/power dependency and no redundancy make it unsuitable for a system that needs to survive board replacement.
 
-#### Decision 2: Shared Password Manager
+#### Decision 2: Credential Custody Model — RESOLVED (2026-05-05)
 
-Credentials that must persist across board turnovers: ISOW org/superadmin account, hosting login, Mollie API keys, Gmail app password, Cloudflare login, domain registrar.
+**Decision: Gmail-anchored model. No shared password manager.**
 
-**Recommendation:** Bitwarden free organization. Zero cost, end-to-end encrypted, works on all devices. If ISOW already has a shared password management solution, use that instead.
+Every third-party account that needs to outlive any single board (Hetzner, Cloudflare, Mollie, domain registrar, etc.) is **registered using the ISOW organizational Gmail address**, not a personal email. This makes the ISOW Gmail account the single root credential — whoever holds it can perform a password reset on every other service and take over operations.
+
+**Operational rules:**
+
+- All third-party accounts use `isow@wur.nl` (or the equivalent ISOW org Gmail) as the registered email.
+- Two-factor authentication, where required, uses methods that don't tie to a personal device (Gmail-deliverable codes, recovery codes printed and stored with the board, or a TOTP secret saved alongside the credential).
+- Runtime secrets (Django `SECRET_KEY`, PostgreSQL password, Mollie API key, Gmail SMTP app password) live only in `.env` on the server and in the current operator's personal vault as backup.
+- The current operator stores their copies of credentials in whatever personal password manager they prefer (1Password, Bitwarden personal, KeePass, browser, etc.) — no organizational vault is mandated.
+- Board handover is a single action: pass the ISOW Gmail password (in person, sealed envelope, or any informal method) to the incoming board. Everything else can be reset from there.
+
+**Why no shared vault:** at ISOW's scale (one operator at a time, ~10 credentials, semi-annual handover), a shared vault adds onboarding friction without buying meaningful security over the Gmail-anchor model. A vault becomes worthwhile only if multiple maintainers operate the system simultaneously — at which point one can be added without rework.
+
+**Implication for the operations runbook:** the runbook must list every account registered against ISOW Gmail and explicitly state the Gmail-anchor handover procedure.
 
 #### Decision 3: System Steward Role
 
@@ -446,7 +475,7 @@ def admin_panel(request):
 
 | Django App | Models | FR Categories | Notes |
 |---|---|---|---|
-| `accounts` | `Member` (custom AbstractUser) | FR1, FR4-FR8, FR44-FR46, FR47-FR49 | User model, registration, auth, profile, roles, GDPR |
+| `accounts` | `Member` (custom AbstractUser) | FR1, FR4-FR8, FR44-FR46, FR47-FR49 | User model, registration, auth, profile, roles, GDPR. Fields: `name`, `email` (unique, required), `photo` (nullable — uploaded on first login for migrated members), `role`, `phone` (optional), `nationality` (optional, free-text), `occupation` (optional, free-text), `notes` (optional, admin-editable text). New Django primary keys are assigned on import; old Excel IDs are not preserved. |
 | `memberships` | `Membership`, `Payment` | FR2-FR3, FR7, FR9-FR12, FR36-FR39 | Plans, Mollie/iDEAL, renewal, digital card, PDF export |
 | `courses` | `Course`, `CourseSession`, `Enrollment` | FR13-FR20 | Course CRUD, sessions, enrollment |
 | `roster` | _(no models)_ | FR21-FR24 | Teacher roster views — thin app, reads from courses/accounts |
@@ -484,7 +513,7 @@ isow_registration_app/
 │   │
 │   ├── accounts/                           # FR1, FR4-FR8, FR44-FR46, FR47-FR49
 │   │   ├── __init__.py
-│   │   ├── models.py                       # Member (custom AbstractUser: name, email, photo, role)
+│   │   ├── models.py                       # Member (custom AbstractUser: name, email, photo, role, phone, nationality, occupation, notes)
 │   │   ├── forms.py                        # RegistrationForm, ProfileForm, LoginForm
 │   │   ├── views.py                        # register, login, logout, profile, password_reset, delete_account
 │   │   ├── urls.py                         # /accounts/ namespace
@@ -743,7 +772,7 @@ All FRs mapped to specific apps, files, and services. Three items clarified duri
 | Roster <3s with photos | HTMX partial, photo grid, client-side compressed images |
 | 50 concurrent users | Gunicorn workers, PostgreSQL direct queries, no caching needed |
 | No cold starts | Always-running server (not free-tier hosting) |
-| 99% uptime | Hosting decision (board), UptimeRobot monitoring |
+| 99% uptime | Hetzner Cloud CX23 (professional EU data center, NVMe SSD, DDoS protection) + UptimeRobot monitoring |
 | Weekly backup | Cron + `export_backup` management command + Gmail SMTP |
 | Health check | `/health/` endpoint in `config/urls.py` |
 | GDPR | Consent at registration, cascading deletion, EU hosting, privacy policy |
@@ -769,10 +798,14 @@ All FRs mapped to specific apps, files, and services. Three items clarified duri
 
 **Deferred (not gaps — board-dependent):**
 
-- Hosting provider selection
-- Shared password manager
 - System steward role assignment
-- Media file serving strategy (finalized with hosting)
+
+**Resolved since initial drafting:**
+
+- Hosting provider selection — Hetzner Cloud CX23 (decided 2026-05-05)
+- Media file serving strategy — Django serves directly (Hetzner CX23 SSD has ample headroom)
+- Migration scope and data rules — active members only (~257), email-required, photo-on-first-login, filtered payment history (see Data Architecture)
+- Credential custody — Gmail-anchored model, no shared password manager (decided 2026-05-05); see Decision 2 in Board Decision Brief
 
 ### Architecture Completeness Checklist
 
@@ -819,9 +852,8 @@ All FRs mapped to specific apps, files, and services. Three items clarified duri
 - Role-based theming via DaisyUI keeps UI consistent without custom CSS per role
 
 **Areas for Future Enhancement:**
-- Media file serving strategy finalized when hosting is decided
 - Operations runbook (documentation deliverable, not code architecture)
-- Board-friendly infrastructure decision brief (separate document)
+- Board-friendly infrastructure decision brief (separate document) — partially complete; system steward decision still open
 
 ### Implementation Handoff
 
