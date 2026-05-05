@@ -194,7 +194,7 @@ _Resolved 2026-05-05: hosting provider (Hetzner Cloud CX23); credential custody 
 | Photo storage | Local filesystem via Django `ImageField` | ~500MB/year at ISOW's scale. No object storage needed. File path stored in database, file on disk under `MEDIA_ROOT/photos/`. Deleted with member on GDPR removal. |
 | Excel library | openpyxl | Standard Python `.xlsx` library. One format for backup export, admin export, Google Sheets migration import, and backup restore. |
 | Caching | None | 50 concurrent users, ~1000 members. PostgreSQL handles all queries directly. No Redis, no Memcached. If a page is slow, optimize the query. |
-| Data migration | Django management command + standardized Excel | `manage.py import_members` reads the same `.xlsx` format used for backup/restore. Google Sheets exported to `.xlsx` first. One-time migration, reusable code path. See **Migration Scope** below for active-only cohort rules. |
+| Data migration | Two-step: throwaway converter + standard import | Migration is split so `import_members` only ever consumes the standard backup `.xlsx` format. **Step 1:** export Google Sheets to `.xlsx`, then run `scripts/convert_legacy_xlsx.py legacy.xlsx → standard.xlsx` — a throwaway script that owns the messy concerns (active-only filtering, the 1 missing-email row, payment history filtering, column renames). The intermediate file is human-reviewable in Excel before commit. **Step 2:** `manage.py import_members standard.xlsx` — same code path used for DR restore. Migration exercises the restore path for real, and `import_members` stays single-purpose. See **Migration Scope** below for active-only cohort rules (enforced by the converter, not the importer). |
 | Migration scope | Active members only | Of 2,010 historical rows in the Excel, only the ~257 with a future expiration date are imported. Recently-expired members re-register through the normal flow. The 16 rows with status `close` are part of the active cohort and are migrated. |
 | Migration data rules | Email required, all other fields optional | The "paid = exists" invariant means the only field the system strictly needs is `email` (for login + invitation). `name`, `phone`, `nationality`, `occupation`, `notes` are imported as-is from Excel without normalization — members can correct their own profile after first login. The 1 active row missing an email requires manual decision before import. |
 | Payment history migration | Filtered to active members | The Excel's 656 historical payment records are filtered to the ~237 belonging to the migrated active members and imported as `Payment` rows. Payments tied to non-migrated members are left in the Excel archive. |
@@ -636,7 +636,7 @@ isow_registration_app/
 │   │   ├── management/
 │   │   │   └── commands/
 │   │   │       ├── export_backup.py        # Weekly cron: Excel export + email
-│   │   │       └── import_members.py       # One-time migration + backup restore
+│   │   │       └── import_members.py       # Loads standard backup .xlsx — used for DR restore AND step 2 of legacy migration
 │   │   └── tests/
 │   │       ├── __init__.py
 │   │       ├── test_export_service.py
@@ -691,8 +691,11 @@ isow_registration_app/
 │   ├── manifest.json                       # PWA manifest
 │   └── sw.js                               # Minimal service worker (install prompt only)
 │
-└── media/                                  # User-uploaded files (gitignored)
-    └── photos/                             # Member photos (managed by Django ImageField)
+├── media/                                  # User-uploaded files (gitignored)
+│   └── photos/                             # Member photos (managed by Django ImageField)
+│
+└── scripts/                                # One-off scripts, not part of the running app
+    └── convert_legacy_xlsx.py              # Throwaway: legacy Google Sheets .xlsx → standard backup .xlsx (active-only filter, payment history filter, column renames). Delete after migration go-live.
 ```
 
 ### Architectural Boundaries
@@ -743,6 +746,10 @@ isow_registration_app/
 **Roster flow:** `roster/views.py:course_roster` → `courses/services/enrollment_service.py:get_enrolled_students()` → render `roster/partials/student_grid.html` with member photos and status
 
 **Backup flow:** Cron → `backup/management/commands/export_backup.py` → `backup/services/export_service.py:export_members_excel()` → `backup/services/export_service.py:email_backup()` → Gmail SMTP
+
+**Legacy migration flow (one-time):** Google Sheets export → `legacy.xlsx` → `scripts/convert_legacy_xlsx.py` (active-only filter, payment history filter, column renames) → `standard.xlsx` (human-reviewed in Excel) → `manage.py import_members standard.xlsx` → `backup/services/import_service.py:import_members_excel()` → DB
+
+**Disaster recovery flow:** Latest weekly Gmail backup `.xlsx` → `manage.py import_members backup.xlsx` → `backup/services/import_service.py:import_members_excel()` → DB. Same code path as step 2 of legacy migration.
 
 ## Architecture Validation Results
 
